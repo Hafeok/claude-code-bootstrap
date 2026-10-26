@@ -3,7 +3,8 @@
 # started in.
 #
 # 1. Signs commits with this environment's key (git-identity.sh).
-# 2. Runs that repository's own setup, .claude/cloud-setup.sh, if it has one.
+# 2. Installs the SDK its global.json pins, if the cached ones do not satisfy it.
+# 3. Runs that repository's own setup, .claude/cloud-setup.sh, if it has one.
 #
 # The repository's script runs once per VM per repository: resume, clear and
 # compact fire this hook again, and a marker file stops a second run. It runs as
@@ -26,6 +27,9 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 bash "$here/git-identity.sh"
 
 project="${CLAUDE_PROJECT_DIR:-$PWD}"
+
+bash "$here/dotnet-pin.sh" "$project"
+
 script="$project/.claude/cloud-setup.sh"
 [ -f "$script" ] || exit 0
 
