@@ -1,45 +1,35 @@
 #!/usr/bin/env bash
-# Provisions a Claude Code cloud VM from a named profile.
-#
-#   bash setup.sh <profile>
+# Prepares a Claude Code cloud VM with what every session shares.
 #
 # Runs as root on a fresh Ubuntu VM, before Claude Code launches, once per
 # environment cache (about seven days). Two platform rules shape every line:
 # exit non-zero and the session does not start; take longer than about five
 # minutes and nothing is cached. So every module is guarded, reports, and never
-# fails the run, and the session-time hooks check for what they need.
+# fails the run.
 #
-# Secrets never pass through here. Whatever this script writes is baked into the
-# environment cache, so keys are read at session start from the environment's
-# variables (hooks/git-identity.sh), never at setup time.
+# Nothing repository-specific happens here: the repository a session is started
+# in may not be checked out yet. Its own setup runs at session start
+# (hooks/session-start.sh). Secrets never pass through here either: whatever
+# this script writes is baked into the environment cache, so keys are read at
+# session start from the environment's variables.
 set -u
 export DEBIAN_FRONTEND=noninteractive
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-profile="${1:-default}"
 
-if [ ! -f "$root/profiles/$profile.env" ]; then
-    echo "claude-code-bootstrap: no profile '$profile'; using 'default'" >&2
-    profile=default
-fi
-
-# Defaults first, then the profile overrides them. Exported so modules see them.
 set -a
-# shellcheck source=profiles/_defaults.env
-. "$root/profiles/_defaults.env"
-# shellcheck disable=SC1090
-. "$root/profiles/$profile.env"
+# shellcheck source=config.env
+. "$root/config.env"
 set +a
 
-echo "claude-code-bootstrap: profile '$profile' at $(git -C "$root" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+echo "claude-code-bootstrap: $(git -C "$root" describe --tags --always 2>/dev/null || echo unknown)"
 
-# What the session-time hooks need to know about this profile. Not secret.
+# What the session-time hooks need. Not secret.
 {
-    printf 'CLAUDE_PROFILE=%q\n' "$profile"
-    printf 'CLAUDE_PROFILE_ROOT=%q\n' "$root"
+    printf 'CLAUDE_BOOTSTRAP_ROOT=%q\n' "$root"
     printf 'GIT_AGENT_NAME=%q\n' "$GIT_AGENT_NAME"
     printf 'GIT_AGENT_EMAIL=%q\n' "$GIT_AGENT_EMAIL"
-} > /etc/claude-profile.env
+} > /etc/claude-code-bootstrap.env
 
 failed=""
 for module in $MODULES; do
@@ -54,6 +44,6 @@ for module in $MODULES; do
     fi
 done
 
-echo "--- done: profile '$profile', modules: $MODULES"
+echo "--- done: $MODULES"
 [ -z "$failed" ] || echo "--- failed:$failed" >&2
 exit 0

@@ -11,9 +11,9 @@
 # so running it every time costs nothing.
 set -u
 
-root="${1:?usage: claude-user.sh <profile-root>}"
+root="${1:?usage: claude-user.sh <bootstrap-root>}"
 settings="$HOME/.claude/settings.json"
-command="bash $root/hooks/git-identity.sh"
+command="bash $root/hooks/session-start.sh"
 
 if ! command -v jq >/dev/null 2>&1; then
     echo "claude-user: jq is missing; the base module installs it" >&2
@@ -28,7 +28,7 @@ if jq --arg cmd "$command" '
     .hooks.SessionStart = (
         (.hooks.SessionStart // [])
         | map(select(any(.hooks[]?; .command == $cmd) | not))
-        + [{ hooks: [{ type: "command", command: $cmd }] }]
+        + [{ hooks: [{ type: "command", command: $cmd, timeout: 900 }] }]
     )' "$settings" > "$merged"; then
     mv "$merged" "$settings"
 else

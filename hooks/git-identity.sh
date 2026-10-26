@@ -6,8 +6,8 @@
 # A cloud sandbox starts with a fresh home directory and no key the user
 # controls. This hook runs at session start, only in the cloud, and only when
 # the environment carries the key in CLAUDE_GIT_SIGNING_KEY: it writes the key,
-# then makes git author, commit and sign as the agent identity the profile names
-# (/etc/claude-profile.env, written by setup.sh).
+# then makes git author, commit and sign as the agent identity config.env names
+# (/etc/claude-code-bootstrap.env, written by setup.sh). Called by session-start.sh.
 #
 # One key per environment, not one shared key: each environment's variables
 # hold its own private key, and every public half is registered as a signing
@@ -21,7 +21,7 @@ set -u
 [ "${CLAUDE_CODE_REMOTE:-}" = "true" ] || exit 0
 
 # shellcheck disable=SC1091
-[ -f /etc/claude-profile.env ] && . /etc/claude-profile.env
+[ -f /etc/claude-code-bootstrap.env ] && . /etc/claude-code-bootstrap.env
 name="${GIT_AGENT_NAME:-Claude (Emil)}"
 email="${GIT_AGENT_EMAIL:-claude+emil@okkels-klein.dk}"
 
