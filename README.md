@@ -1,8 +1,14 @@
 # claude-code-bootstrap
 
 One Setup script for every Claude Code cloud environment. Every environment's
-"Setup script" field is the same ten-line stub: it clones this repository at a
-pinned tag and prepares what every session shares. The repository a session is
+"Setup script" field is the same one line:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Hafeok/claude-code-bootstrap/v1/bootstrap.sh | bash -s v1
+```
+
+It fetches `bootstrap.sh`, which clones this repository at the same ref and
+prepares what every session shares. The repository a session is
 started in brings its own setup in `.claude/cloud-setup.sh`, which runs at
 session start.
 
@@ -12,7 +18,7 @@ Generalized from Varve's `.claude/cloud-setup.sh` and
 ## How a session comes up
 
 ```
-Setup script (stub.sh)          root, before Claude Code, cached ~7 days
+Setup script (bootstrap.sh)     root, before Claude Code, cached ~7 days
   └─ clone this repo at REF → /opt/claude-code-bootstrap
      └─ setup.sh
         ├─ base          ssh-keygen, jq
@@ -30,7 +36,7 @@ session-start work is not cached, so it repeats in every new session.
 ## Layout
 
 ```
-stub.sh                 the Setup script field, verbatim, for every environment
+bootstrap.sh            piped from the Setup script; clones this repo at a ref, runs setup.sh
 setup.sh                runs config.env's modules; guarded, never fails the run
 config.env              modules to run and the agent's git identity
 modules/<name>.sh       one shared provisioning step each
@@ -56,8 +62,8 @@ Varve's existing `.claude/cloud-setup.sh` already fits this contract unchanged.
 
 ## Setting up an environment
 
-1. At claude.ai/code, edit the environment and paste `stub.sh` into **Setup
-   script**.
+1. At claude.ai/code, edit the environment and set **Setup script** to the
+   one-liner at the top of this file.
 2. Generate a signing key for this environment only:
 
    ```bash
@@ -94,7 +100,9 @@ Environments run a tag, not `main`:
 git tag v2 && git push origin v2
 ```
 
-then bump `REF` in each environment's Setup script. Any edit to that field
+then change both `v1`s in each environment's Setup script to `v2` (the URL
+fetches `bootstrap.sh` at that ref; the argument clones the rest at it). Using
+`main` in both places tracks main instead, as Varve's old one-liner did. Any edit to that field
 forces the environment cache to rebuild, which is the only way a change here
 reaches sessions. Roll one environment first and watch a session start before
 moving the rest. A change to a repository's `.claude/cloud-setup.sh` needs none
@@ -102,7 +110,9 @@ of this: the next session runs it.
 
 ## Migrating Varve
 
-1. Point Varve's environment at this stub.
+1. Replace the environment's Varve one-liner with this repository's. Varve's
+   setup then runs only in Varve sessions, not in every session of the
+   environment.
 2. Keep `.claude/cloud-setup.sh`: it now runs at session start instead.
    Optionally update its header comment, which describes the old curl one-liner.
 3. Remove the SessionStart entry from Varve's `.claude/settings.json` and
@@ -111,10 +121,9 @@ of this: the next session runs it.
 
 ## Things to verify on the first run
 
-- **The private clone at setup time.** The stub clones with plain `git`. If
-  the setup phase has no GitHub credentials for this repository, the setup log
-  says `could not clone` and the session starts unprovisioned. Nothing here is
-  secret, so the simplest fix is to make this repository public.
+- **The repository is public.** `raw.githubusercontent.com` serves only public
+  repositories without a token. If the setup log says `could not clone` or
+  curl reports a 404, check the visibility and that the tag is pushed.
 - **User settings persisting.** `claude-user` registers the hook in
   `~/.claude/settings.json` at setup time. If no `git-identity:` line appears at
   session start, sessions do not see that file; the fallback is a SessionStart
