@@ -53,4 +53,10 @@ git config --global user.signingkey "$key"
 git config --global commit.gpgsign true
 git config --global tag.gpgsign true
 
+# Lets git verify what it signs. Without it every signed commit prints "error:
+# gpg.ssh.allowedSignersFile needs to be configured" and `%G?` reports N even
+# for a good signature. Trusts only this environment's own key.
+printf '%s namespaces="git" %s\n' "$email" "$(cat "$key.pub")" > "$HOME/.ssh/allowed_signers"
+git config --global gpg.ssh.allowedSignersFile "$HOME/.ssh/allowed_signers"
+
 echo "git-identity: commits are signed as $name <$email> with $(ssh-keygen -lf "$key.pub" | cut -d' ' -f2)."
