@@ -15,13 +15,13 @@ set -u
 
 PROFILE=default
 REF=v1
-REPO=https://github.com/Hafeok/claude-cloud-profile
+REPO=https://github.com/Hafeok/claude-code-bootstrap
 DIR=/opt/claude-profile
 
 rm -rf "$DIR"
 if git clone -q --depth 1 --branch "$REF" "$REPO" "$DIR"; then
     bash "$DIR/setup.sh" "$PROFILE"
 else
-    echo "claude-cloud-profile: could not clone $REPO at $REF; this environment is unprovisioned" >&2
+    echo "claude-code-bootstrap: could not clone $REPO at $REF; this environment is unprovisioned" >&2
 fi
 exit 0

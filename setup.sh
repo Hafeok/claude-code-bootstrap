@@ -19,7 +19,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 profile="${1:-default}"
 
 if [ ! -f "$root/profiles/$profile.env" ]; then
-    echo "claude-cloud-profile: no profile '$profile'; using 'default'" >&2
+    echo "claude-code-bootstrap: no profile '$profile'; using 'default'" >&2
     profile=default
 fi
 
@@ -31,7 +31,7 @@ set -a
 . "$root/profiles/$profile.env"
 set +a
 
-echo "claude-cloud-profile: profile '$profile' at $(git -C "$root" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+echo "claude-code-bootstrap: profile '$profile' at $(git -C "$root" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 # What the session-time hooks need to know about this profile. Not secret.
 {

@@ -1,4 +1,4 @@
-# claude-cloud-profile
+# claude-code-bootstrap
 
 One setup for every Claude Code cloud environment. Each environment's "Setup
 script" field is a ten-line stub that clones this repository at a pinned ref and
